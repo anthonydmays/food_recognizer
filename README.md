@@ -39,9 +39,13 @@ A Next.js application that generates recipes from food images using OpenAI's GPT
    ```
 
 3. **Set up environment variables:**
-   - Copy `.env.local` and add your OpenAI API key:
+   - Copy the example environment file:
    ```bash
-   OPENAI_API_KEY=your_openai_api_key_here
+   cp .env.example .env.local
+   ```
+   - Edit `.env.local` and add your OpenAI API key:
+   ```bash
+   OPENAI_API_KEY=your_actual_openai_api_key_here
    ```
 
 4. **Run the development server:**
@@ -113,9 +117,29 @@ src/
 │   └── recipe.ts                # TypeScript type definitions
 └── utils/
     └── imageUtils.ts            # Image processing utilities
+
+# Configuration files
+.env.example                     # Environment variable template
+.env.local                       # Your local environment variables (gitignored)
 ```
 
 ## Configuration
+
+### Environment Variables
+
+This project uses environment variables for configuration. A template file `.env.example` is provided with all required variables.
+
+#### Required Variables:
+- `OPENAI_API_KEY`: Your OpenAI API key (required for recipe generation)
+- `NEXT_PUBLIC_APP_URL`: The base URL of your application (default: http://localhost:3000)
+
+#### Optional Variables:
+- `NODE_ENV`: Set to 'development' for additional debugging (default: development)
+
+#### Setup Steps:
+1. Copy the example file: `cp .env.example .env.local`
+2. Edit `.env.local` with your actual values
+3. Restart the development server
 
 ### OpenAI API Setup
 
@@ -168,9 +192,16 @@ Make sure to set the `OPENAI_API_KEY` environment variable in your deployment pl
 
 1. Fork the repository
 2. Create a feature branch
-3. Make your changes
-4. Add tests if applicable
-5. Submit a pull request
+3. Set up your environment:
+   ```bash
+   cp .env.example .env.local
+   # Add your OpenAI API key to .env.local
+   ```
+4. Make your changes
+5. Add tests if applicable
+6. Submit a pull request
+
+**Note**: Never commit your `.env.local` file or real API keys to the repository.
 
 ## License
 
