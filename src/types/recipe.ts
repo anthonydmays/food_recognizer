@@ -1,3 +1,5 @@
+export type UnitSystem = 'metric' | 'imperial';
+
 export interface Ingredient {
   name: string;
   quantity: string;
@@ -11,10 +13,12 @@ export interface Recipe {
   instructions: string[];
   cookingTime?: number;
   servings?: number;
+  unitSystem?: UnitSystem;
 }
 
 export interface RecipeRequest {
   imageBase64: string;
+  unitSystem?: UnitSystem;
 }
 
 export interface RecipeResponse {

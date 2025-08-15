@@ -4,15 +4,21 @@ import React, { useState, useCallback } from 'react';
 import Image from 'next/image';
 import { useDropzone } from 'react-dropzone';
 import { validateImageFile, compressImage } from '@/utils/imageUtils';
+import { UnitSystem } from '@/types/recipe';
+import UnitSelector from '@/components/UnitSelector';
 
 interface ImageUploadComponentProps {
   onImageUpload: (base64: string) => void;
   isUploading?: boolean;
+  unitSystem: UnitSystem;
+  onUnitSystemChange: (unit: UnitSystem) => void;
 }
 
 export default function ImageUploadComponent({ 
   onImageUpload, 
-  isUploading = false 
+  isUploading = false,
+  unitSystem,
+  onUnitSystemChange
 }: ImageUploadComponentProps) {
   const [preview, setPreview] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +66,13 @@ export default function ImageUploadComponent({
   };
 
   return (
-    <div className="w-full max-w-md mx-auto">
+    <div className="w-full max-w-md mx-auto space-y-6">
+      {/* Unit System Selector */}
+      <UnitSelector 
+        selectedUnit={unitSystem}
+        onUnitChange={onUnitSystemChange}
+      />
+      
       {!preview ? (
         <div
           {...getRootProps()}

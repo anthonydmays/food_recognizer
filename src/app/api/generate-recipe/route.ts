@@ -1,14 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server';
 import OpenAI from 'openai';
-import { Recipe, RecipeRequest } from '@/types/recipe';
+import { Recipe, RecipeRequest, UnitSystem } from '@/types/recipe';
+import { getUnitSystemPrompt } from '@/utils/unitUtils';
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-const RECIPE_PROMPT = `
+function generateRecipePrompt(unitSystem: UnitSystem = 'imperial'): string {
+  const unitInstructions = getUnitSystemPrompt(unitSystem);
+  
+  return `
 Analyze this food image and generate a complete recipe. 
 IMPORTANT: Respond ONLY with a valid JSON object. Do not include any markdown formatting, explanations, or other text.
+
+${unitInstructions}
 
 The JSON object must contain exactly these fields:
 {
@@ -27,8 +33,10 @@ The JSON object must contain exactly these fields:
 }
 
 Make reasonable assumptions about quantities and cooking methods based on what you can see in the image.
+ALL measurements must use the specified unit system above.
 Response must be valid JSON only.
 `;
+}
 
 function parseRecipeFromResponse(content: string): Recipe {
   // Log the content for debugging
@@ -69,7 +77,7 @@ function extractRecipeFromText(content: string): Recipe {
   const lines = content.split('\n').map(line => line.trim()).filter(line => line.length > 0);
   
   let title = 'Recipe from Image';
-  let description = '';
+  const description = '';
   const ingredients: { name: string; quantity: string; unit: string }[] = [];
   const instructions: string[] = [];
   
@@ -168,7 +176,7 @@ function validateAndFormatRecipe(recipe: unknown): Recipe {
 export async function POST(request: NextRequest) {
   try {
     const body: RecipeRequest = await request.json();
-    const { imageBase64 } = body;
+    const { imageBase64, unitSystem = 'imperial' } = body;
 
     if (!imageBase64) {
       return NextResponse.json(
@@ -184,8 +192,8 @@ export async function POST(request: NextRequest) {
         title: 'Sample Recipe (API Key Required)',
         description: 'This is a sample recipe. Please configure your OpenAI API key in .env.local to generate real recipes from images.',
         ingredients: [
-          { name: 'Sample ingredient 1', quantity: '1', unit: 'cup' },
-          { name: 'Sample ingredient 2', quantity: '2', unit: 'tablespoons' },
+          { name: 'Sample ingredient 1', quantity: '1', unit: unitSystem === 'metric' ? 'cup (250ml)' : 'cup' },
+          { name: 'Sample ingredient 2', quantity: '2', unit: unitSystem === 'metric' ? 'tablespoons (30ml)' : 'tablespoons' },
           { name: 'Sample ingredient 3', quantity: '1', unit: 'piece' }
         ],
         instructions: [
@@ -195,11 +203,14 @@ export async function POST(request: NextRequest) {
           'Upload an image to generate a real recipe'
         ],
         cookingTime: 30,
-        servings: 4
+        servings: 4,
+        unitSystem: unitSystem
       };
       
       return NextResponse.json({ success: true, recipe: sampleRecipe });
     }
+
+    const recipePrompt = generateRecipePrompt(unitSystem);
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o", // Updated to use the latest GPT-4 with vision
@@ -207,7 +218,7 @@ export async function POST(request: NextRequest) {
         {
           role: "user",
           content: [
-            { type: "text", text: RECIPE_PROMPT },
+            { type: "text", text: recipePrompt },
             {
               type: "image_url",
               image_url: { url: `data:image/jpeg;base64,${imageBase64}` }
@@ -229,6 +240,9 @@ export async function POST(request: NextRequest) {
     console.log('OpenAI Raw Response:', content);
 
     const recipe = parseRecipeFromResponse(content);
+    
+    // Set the unit system in the recipe
+    recipe.unitSystem = unitSystem;
 
     return NextResponse.json({ success: true, recipe });
   } catch (error) {

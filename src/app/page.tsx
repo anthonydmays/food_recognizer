@@ -1,14 +1,21 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import ImageUploadComponent from '@/components/ImageUploadComponent';
 import RecipeDisplayComponent from '@/components/RecipeDisplayComponent';
-import { Recipe, RecipeResponse } from '@/types/recipe';
+import { Recipe, RecipeResponse, UnitSystem } from '@/types/recipe';
+import { detectUserUnitSystem } from '@/utils/unitUtils';
 
 export default function Home() {
   const [recipe, setRecipe] = useState<Recipe | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [unitSystem, setUnitSystem] = useState<UnitSystem>('imperial');
+
+  // Detect user's preferred unit system on mount
+  useEffect(() => {
+    setUnitSystem(detectUserUnitSystem());
+  }, []);
 
   const handleImageUpload = async (base64: string) => {
     setIsGenerating(true);
@@ -21,7 +28,10 @@ export default function Home() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ imageBase64: base64 }),
+        body: JSON.stringify({ 
+          imageBase64: base64,
+          unitSystem: unitSystem
+        }),
       });
 
       const result: RecipeResponse = await response.json();
@@ -67,6 +77,8 @@ export default function Home() {
               <ImageUploadComponent 
                 onImageUpload={handleImageUpload}
                 isUploading={isGenerating}
+                unitSystem={unitSystem}
+                onUnitSystemChange={setUnitSystem}
               />
             </section>
 
@@ -95,7 +107,7 @@ export default function Home() {
                     </div>
                     <div>
                       <h3 className="font-medium text-gray-900">Upload your food image</h3>
-                      <p className="text-sm text-gray-600">Take a photo or upload an image of any dish</p>
+                      <p className="text-sm text-gray-600">Take a photo or upload an image of any dish and choose your preferred units</p>
                     </div>
                   </div>
                   <div className="flex items-start gap-3">
@@ -113,7 +125,7 @@ export default function Home() {
                     </div>
                     <div>
                       <h3 className="font-medium text-gray-900">Get your recipe</h3>
-                      <p className="text-sm text-gray-600">Receive complete ingredients list and cooking instructions</p>
+                      <p className="text-sm text-gray-600">Receive complete ingredients list and cooking instructions in your preferred units</p>
                     </div>
                   </div>
                 </div>
